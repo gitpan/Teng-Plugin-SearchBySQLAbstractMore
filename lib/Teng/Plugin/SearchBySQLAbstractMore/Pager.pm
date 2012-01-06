@@ -16,7 +16,7 @@ sub search_by_sql_abstract_more_with_pager {
 
     my $table = $self->schema->get_table($table_name) or Carp::croak("No such table $table_name");
     $args->{-limit} += 1;
-    my ($sql, @binds) = SQL::Abstract::More->new->select(%$args);
+    my ($sql, @binds) = Teng::Plugin::SearchBySQLAbstractMore->_sql_abstract_more->select(%$args);
 
     my $sth = $self->dbh->prepare($sql) or Carp::croak $self->dbh->errstr;
     $sth->execute(@binds) or Carp::croak $self->dbh->errstr;
@@ -49,16 +49,7 @@ sub search_by_sql_abstract_more_with_pager {
 
 =head1 NAME
 
-Teng::Plugin::SearchBySQLAbstractMore::Pager - use SQL::AbstractMore as Query Builder for Teng
-
-=head1 VERSION
-
-Version 0.01
-
-=cut
-
-our $VERSION = '0.01';
-
+Teng::Plugin::SearchBySQLAbstractMore::Pager - pager plugin using SQL::AbstractMore as Query Builder for Teng
 
 =head1 SYNOPSIS
 

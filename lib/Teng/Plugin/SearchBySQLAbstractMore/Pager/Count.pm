@@ -1,4 +1,4 @@
-package Teng::Plugin::SearchBySQLAbstractMore::Pager::MySQLFoundRows;
+package Teng::Plugin::SearchBySQLAbstractMore::Pager::Count;
 
 use strict;
 use warnings;
@@ -12,24 +12,35 @@ our @EXPORT = qw/search_by_sql_abstract_more_with_pager/;
 
 sub search_by_sql_abstract_more_with_pager {
     my ($self, $table_name, $where, $_opt) = @_;
+    my $sql_abstract_more = Teng::Plugin::SearchBySQLAbstractMore->_sql_abstract_more;
+
     ($table_name, my($args, $rows, $page)) = Teng::Plugin::SearchBySQLAbstractMore::_arrange_args($table_name, $where, $_opt);
 
     my $table = $self->schema->get_table($table_name) or Carp::croak("No such table $table_name");
+    my ($sql, @binds) = $sql_abstract_more->select(%$args);
 
-    my ($sql, @binds) = Teng::Plugin::SearchBySQLAbstractMore->_sql_abstract_more->select(%$args);
-    $sql =~s{^\s*SELECT }{SELECT SQL_CALC_FOUND_ROWS }i;
-    my $sth = $self->dbh->prepare($sql) or Carp::croak $self->dbh->errstr;
-    $sth->execute(@binds) or Carp::croak $self->dbh->errstr;
-    my $total_entries = $self->dbh->selectrow_array(q{SELECT FOUND_ROWS()});
-    my $itr = Teng::Iterator->new(
-                                  teng             => $self,
-                                  sth              => $sth,
-                                  sql              => $sql,
-                                  row_class        => $self->schema->get_row_class($table_name),
-                                  table_name       => $table_name,
-                                  suppress_object_creation => $self->suppress_row_objects,
-                                 );
+    $args->{-columns} = [ 'count(*)' ];
+    delete @{$args}{qw/-offset -limit/};
 
+    my ($count_sql, @count_binds) = $sql_abstract_more->select(%$args);
+    my $count_sth = $self->dbh->prepare($count_sql) or Carp::croak $self->dbh->errstr;
+    my $sth       = $self->dbh->prepare($sql)       or Carp::croak $self->dbh->errstr;
+    my ($total_entries, $itr);
+    do {
+        my $txn_scope = $self->txn_scope;
+        $count_sth->execute(@count_binds) or Carp::croak $self->dbh->errstr;
+        $sth->execute(@binds)             or Carp::croak $self->dbh->errstr;
+        ($total_entries) = $count_sth->fetchrow_array();
+        $itr = Teng::Iterator->new(
+                                   teng             => $self,
+                                   sth              => $sth,
+                                   sql              => $sql,
+                                   row_class        => $self->schema->get_row_class($table_name),
+                                   table_name       => $table_name,
+                                   suppress_object_creation => $self->suppress_row_objects,
+                                  );
+        $txn_scope->commit;
+    };
     my $pager = Data::Page->new();
     $pager->entries_per_page($rows);
     $pager->current_page($page);
@@ -41,7 +52,7 @@ sub search_by_sql_abstract_more_with_pager {
 
 =head1 NAME
 
-Teng::Plugin::SearchBySQLAbstractMore::Pager::MySQLFoundRows - pager plugin using SQL::AbstractMore. count total entry by MySQL FOUND_ROWS()
+Teng::Plugin::SearchBySQLAbstractMore::Pager::Count - pager plugin using SQL::AbstractMore. count total entry by count(*)
 
 =head1 SYNOPSIS
 
@@ -109,4 +120,4 @@ See http://dev.perl.org/licenses/ for more information.
 
 =cut
 
-1; # End of Teng::Plugin::SearchBySQLAbstractMore::Pager::MySQLFoundRows
+1; # End of Teng::Plugin::SearchBySQLAbstractMore::Pager::Count

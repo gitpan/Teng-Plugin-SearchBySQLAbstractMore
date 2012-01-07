@@ -9,10 +9,19 @@ use Data::Page;
 use Teng::Plugin::SearchBySQLAbstractMore ();
 
 our @EXPORT = qw/search_by_sql_abstract_more_with_pager/;
+our $VERSION = '0.05';
+
+sub init {
+    $_[1]->Teng::Plugin::SearchBySQLAbstractMore::_init();
+}
+
+# work around
+push @EXPORT, qw/sql_abstract_more_instance/;
+*sql_abstract_more_instance = \&Teng::Plugin::SearchBySQLAbstractMore::sql_abstract_more_instance;
 
 sub search_by_sql_abstract_more_with_pager {
     my ($self, $table_name, $where, $_opt) = @_;
-    my $sql_abstract_more = Teng::Plugin::SearchBySQLAbstractMore->_sql_abstract_more;
+    my $sql_abstract_more = $self->sql_abstract_more_instance;
 
     ($table_name, my($args, $rows, $page)) = Teng::Plugin::SearchBySQLAbstractMore::_arrange_args($table_name, $where, $_opt);
 

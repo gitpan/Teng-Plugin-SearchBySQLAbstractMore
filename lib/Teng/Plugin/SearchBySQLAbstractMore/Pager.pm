@@ -9,6 +9,15 @@ use Data::Page::NoTotalEntries;
 use Teng::Plugin::SearchBySQLAbstractMore ();
 
 our @EXPORT = qw/search_by_sql_abstract_more_with_pager/;
+our $VERSION = '0.05';
+
+sub init {
+    $_[1]->Teng::Plugin::SearchBySQLAbstractMore::_init();
+}
+
+# work around
+push @EXPORT, qw/sql_abstract_more_instance/;
+*sql_abstract_more_instance = \&Teng::Plugin::SearchBySQLAbstractMore::sql_abstract_more_instance;
 
 sub search_by_sql_abstract_more_with_pager {
     my ($self, $table_name, $where, $_opt) = @_;
@@ -16,7 +25,7 @@ sub search_by_sql_abstract_more_with_pager {
 
     my $table = $self->schema->get_table($table_name) or Carp::croak("No such table $table_name");
     $args->{-limit} += 1;
-    my ($sql, @binds) = Teng::Plugin::SearchBySQLAbstractMore->_sql_abstract_more->select(%$args);
+    my ($sql, @binds) = $self->sql_abstract_more_instance->select(%$args);
 
     my $sth = $self->dbh->prepare($sql) or Carp::croak $self->dbh->errstr;
     $sth->execute(@binds) or Carp::croak $self->dbh->errstr;

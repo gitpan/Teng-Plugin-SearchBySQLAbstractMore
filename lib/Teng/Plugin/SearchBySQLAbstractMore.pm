@@ -176,13 +176,9 @@ sub install_sql_abstract_more {
 
 Teng::Plugin::SearchBySQLAbstractMore - use L<SQL::Abstract::More> as Query Builder for Teng
 
-=head1 VERSION
-
-Version 0.07
-
 =cut
 
-our $VERSION = '0.11';
+our $VERSION = '0.12';
 
 
 =head1 SYNOPSIS
@@ -251,7 +247,7 @@ Compatible usage with Teng's search method.
  #   WHERE ( ( ( x = ? AND ( y > ? OR y < ? ) ) AND name LIKE ? ) )
  #   GROUP BY x, y  HAVING ( max_age < ? );
 
-SQL::Abstract::More original usage(as first argument, use hash ref instead of teble name):
+SQL::Abstract::More original usage(as first argument, use hash ref instead of table name):
 
  $teng->search_by_sql_abstract_more(
    {
@@ -324,7 +320,7 @@ see SYNOPSIS.
 
  ($sql, @binds) = $teng->create_sql_by_sql_abstract_more($table, $where, $opt);
 
-This method returns sql satement and its bind values.
+This method returns SQL statement and its bind values.
 It doesn't check table is in schema.
 
 =head1 CLASS METHOD
@@ -339,7 +335,7 @@ return SQL::Abstract::More object.
 
   YourClass->sql_abstract_more_new_option(sql_dialect => 'Oracle');
 
-This method's arguments are passded to SQL::Abstract::More->new().
+This method's arguments are passed to SQL::Abstract::More->new().
 see L<SQL::Abstract::More> new options.
 
 =head2 replace_teng_search
